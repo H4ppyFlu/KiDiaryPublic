@@ -1,0 +1,4 @@
+# The dump job (ADR-0008) is bind-mounted into an Alpine container and run by BusyBox
+# `sh`, which does not survive carriage returns. A checkout on Windows must leave these
+# alone, or the backup service stops at its first line.
+*.sh text eol=lf

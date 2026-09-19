@@ -1,0 +1,258 @@
+main {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.subtitle {
+  margin: 0.25rem 0 2rem;
+  opacity: 0.7;
+}
+
+.checking {
+  opacity: 0.7;
+}
+
+.card {
+  border: 1px solid;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+}
+
+.card--good {
+  border-color: color-mix(in srgb, green 40%, transparent);
+}
+
+.card--bad {
+  border-color: color-mix(in srgb, red 40%, transparent);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 1rem 0 0;
+}
+
+dt {
+  opacity: 0.7;
+}
+
+dd {
+  margin: 0;
+}
+
+.sign-in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.sign-in label {
+  opacity: 0.7;
+}
+
+.sign-in input {
+  flex: 1 1 6rem;
+  letter-spacing: 0.3em;
+}
+
+/* The hour the evening notification arrives at, and the one button that moves it: a row
+   where there is room, two lines on a narrow phone. */
+.notification-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+input,
+textarea {
+  padding: 0.5rem 0.625rem;
+  border: 1px solid color-mix(in srgb, CanvasText 30%, transparent);
+  border-radius: 0.5rem;
+  background: Canvas;
+  color: CanvasText;
+  font: inherit;
+  min-width: 0;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: 1px solid color-mix(in srgb, CanvasText 30%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, CanvasText 8%, Canvas);
+  color: CanvasText;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The Prompt is the loudest thing on the screen; everything else on it is furniture. */
+.prompt {
+  margin: 0 0 1rem;
+  font-size: 1.375rem;
+  line-height: 1.3;
+}
+
+.sitting textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+/* Ending the Sitting sits on the far left, the two ways of carrying on at the right;
+   on a narrow phone they wrap rather than shrink to a row of slivers. */
+.sitting .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sitting .actions .quiet {
+  margin-right: auto;
+}
+
+/* A button that is always there and never the one being urged. */
+.quiet {
+  border-color: transparent;
+  background: none;
+  opacity: 0.7;
+  padding-left: 0;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* The Prompt above the box already says what to write; a screen reader still needs
+   the label said out loud. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A quiet line under the Prompt, for the one thing the screen has to explain: that
+   skipping the last question left brings it straight back. */
+.aside {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.9375rem;
+  opacity: 0.7;
+}
+
+.refused {
+  margin: 0.75rem 0 0;
+  color: color-mix(in srgb, red 70%, CanvasText);
+}
+
+/* The way through to the other two screens, above whichever one is showing. Quiet,
+   because it is furniture: the Prompt or the Answers are the screen. */
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Side padding would double up on the gap and push the first word away from the
+   heading it sits under; the gap is what separates them. */
+nav button {
+  padding-inline: 0;
+}
+
+/* What to do when the browser has refused: one instruction per kind of phone, and
+   nobody has to read the one that is not theirs. */
+.card ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.card li + li {
+  margin-top: 0.5rem;
+}
+
+/* The Diary, newest evening first. Each evening is a heading and the Answers written
+   under it — both Parents' together, because there is one Diary (ADR-0001). */
+.diary {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.day h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+/* How old the Child was that evening: a fact about the day, said once under its date
+   rather than repeated beneath every Answer (ADR-0002). */
+.age {
+  margin: 0.125rem 0 1rem;
+  opacity: 0.7;
+  font-size: 0.9375rem;
+}
+
+.entry {
+  border-left: 2px solid color-mix(in srgb, CanvasText 20%, transparent);
+  padding-left: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+/* The gap between evenings is the Diary's own; the last Answer of one must not
+   add to it. */
+.entry:last-child {
+  margin-bottom: 0;
+}
+
+/* The question, quieter than the Answer but still there: a bare sentence stops
+   making sense within a year. */
+.asked {
+  margin: 0 0 0.25rem;
+  opacity: 0.7;
+  font-size: 0.9375rem;
+}
+
+.written {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.by {
+  margin: 0.25rem 0 0;
+  opacity: 0.7;
+  font-size: 0.875rem;
+}
+
+/* Two cards under each other — the notification switch and the hour below it — and a
+   completed evening landing in the Diary: both need air between them. */
+.card + .card,
+.card--good + .diary {
+  margin-top: 1.5rem;
+}

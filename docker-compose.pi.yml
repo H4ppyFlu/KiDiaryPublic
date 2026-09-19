@@ -1,0 +1,40 @@
+# What the Pi does differently from the laptop (ADR-0005).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.pi.yml up -d --build
+#
+# The Pi's `.env` carries `COMPOSE_FILE=docker-compose.yml:docker-compose.pi.yml`, so in
+# practice this is a plain `docker compose up -d --build` there and the two flags are
+# never typed. That indirection is deliberate: the command that brings the Diary up on
+# the Pi is the same one muscle memory types on the laptop, and it cannot come up on the
+# laptop's terms by being half-remembered at four in the morning.
+#
+# Requires Compose v2.24 or newer, for `!override` below. Raspberry Pi OS's own
+# `docker.io` package is older than that and ships no `docker compose` at all;
+# docs/deploying-to-the-pi.md replaces it with Docker's repository before any of this is run.
+
+services:
+  api:
+    # `!override` rather than simply listing the port again, because Compose *concatenates*
+    # sequences across files rather than replacing them. Without the tag the API is
+    # published on 127.0.0.1:8000 **and** on 0.0.0.0:8000 — every interface, exactly as
+    # before — and this file would read as though it had worked while changing nothing.
+    # That is the failure mode this whole file exists to prevent, so it is worth the tag:
+    #
+    #   docker compose config | grep -A4 'ports:'
+    #
+    # is the one command that says which of the two is true on any given machine.
+    #
+    # The bind itself is the point. Published on every interface, the Diary answers plain
+    # http to anything on the home wifi — a guest's phone, a television, anything that has
+    # ever been given the password — with no tailnet and no certificate in the way.
+    # ADR-0005 chose unreachable over authenticated, and this line is what makes that a
+    # fact rather than an intention: from here the only way in is Tailscale Serve, which
+    # terminates https on the Pi itself and forwards to this loopback port.
+    ports: !override
+      - "127.0.0.1:8000:8000"
+    environment:
+      # Not `${COOKIE_SECURE:-true}`. On the Pi there is no http for a cookie to fall back
+      # to, so there is no reading of `.env` — including a missing line, or one copied from
+      # the laptop — that should hand out a sign-in cookie without this flag. The cookie is
+      # good for a year, which is a long time to have let it travel in the clear.
+      COOKIE_SECURE: "true"

@@ -1,0 +1,14 @@
+.git
+.venv
+.env
+Notes
+docs
+*.md
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+# The nightly dump (ADR-0008): the job is bind-mounted into the db image rather than
+# built, and the dumps themselves are the Diary. Neither belongs in a build context.
+backup
+backups

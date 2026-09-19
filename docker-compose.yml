@@ -1,0 +1,142 @@
+name: kidiary
+
+x-database-url: &database-url
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-kidiary}:${POSTGRES_PASSWORD:-kidiary}@db:5432/${POSTGRES_DB:-kidiary}
+
+# What the API and the scheduler (ADR-0009) both need: the same database, the same
+# timezone — a Diary day and a notification time are both local time — and the same
+# VAPID pair, so that a notification is signed by the key the phone subscribed with.
+# The shared PIN and the secret signing the cookie it buys are deliberately without
+# defaults: the API refuses to start until `.env` supplies them. They are in this shared
+# block rather than on the API alone because `Settings` is one object and refuses to
+# exist without them; the scheduler serves nothing and never reads either.
+x-app-environment: &app-environment
+  <<: *database-url
+  TIMEZONE: ${TIMEZONE:-Europe/Berlin}
+  PIN: ${PIN:-}
+  SESSION_SECRET: ${SESSION_SECRET:-}
+  # The Web Push key pair. Empty is a working state: the stack runs and says it
+  # cannot offer notifications. Passed in rather than baked into the image, which
+  # is built on the Pi itself (ADR-0007) from a repository these must never reach.
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  # No fallback, deliberately. `mailto:kidiary@localhost` was the one here, and it is the
+  # single value `vapid.py` now refuses outright — so a default would inject the
+  # guaranteed startup failure into a stack whose `.env` merely forgot the line, and the
+  # error would name a string that appears nowhere in that file.
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kidiary}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kidiary}
+      POSTGRES_DB: ${POSTGRES_DB:-kidiary}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # $$ escapes Compose interpolation: these expand inside the container,
+      # from the environment set just above.
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # Serves both the JSON API and the built frontend. It is also what migrates and
+  # seeds the database, on every start, before it serves anything.
+  api:
+    build:
+      context: .
+      target: runtime
+    environment:
+      <<: *app-environment
+      # Who the Diary is about and who keeps it. Recorded on the first start only;
+      # a database that already has a Child keeps the one it has. Only this service
+      # seeds, so only this one is told.
+      CHILD_NAME: ${CHILD_NAME:-Kind}
+      CHILD_BIRTHDATE: ${CHILD_BIRTHDATE:-2024-01-01}
+      PARENT_ONE_NAME: ${PARENT_ONE_NAME:-Mama}
+      PARENT_TWO_NAME: ${PARENT_TWO_NAME:-Papa}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # The evening notification: the API's image with a different command, and no port of
+  # its own. A separate service rather than a thread in the API (ADR-0009), because a
+  # scheduler inside a multi-worker API process fires once per worker and both Parents
+  # get duplicates. It does not migrate — the API owns that — and a pass that finds the
+  # schema not there yet is logged and retried a minute later.
+  scheduler:
+    build:
+      context: .
+      target: runtime
+    command: ["python", "-m", "app.scheduler"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+
+  # The nightly dump (ADR-0008), running in the database's own image: a `pg_dump` older
+  # than the server it dumps refuses to run at all, and taking the client out of the image
+  # the server runs from is the one version rule that cannot drift. Nothing is built for
+  # it — `backup/` is mounted in, so deploying a change to the job is a `git pull`.
+  backup:
+    image: postgres:17-alpine
+    # Run as an argument to `sh` rather than executed, so that a checkout on Windows —
+    # where there is no executable bit to lose — starts the same as one on the Pi.
+    command: ["sh", "/opt/kidiary/nightly.sh"]
+    environment:
+      # libpq's own variables rather than DATABASE_URL: nothing in this service speaks
+      # SQLAlchemy, and `pg_dump` reads these four without being told.
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-kidiary}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-kidiary}
+      PGDATABASE: ${POSTGRES_DB:-kidiary}
+      # A Diary day is local time and a dump is named after one, so this container keeps
+      # the same clock as the API and the scheduler.
+      TZ: ${TIMEZONE:-Europe/Berlin}
+      KEEP: ${BACKUP_KEEP:-7}
+    volumes:
+      - ./backup:/opt/kidiary:ro
+      # The one directory that matters if the Pi ever dies. On the Pi this is the path
+      # Syncthing mirrors to the laptop; here it is a folder beside the repository.
+      - ${BACKUP_DIR:-./backups}:/dumps
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Not started by `docker compose up`; see the README.
+  tests:
+    build:
+      context: .
+      target: dev
+    profiles: ["test"]
+    environment:
+      <<: *database-url
+      # The suite sets its own in `conftest.py`; these only satisfy the check that the
+      # API makes at import time, so running the tests never needs a `.env`.
+      PIN: "0000"
+      SESSION_SECRET: "the-suite-signs-with-its-own"
+    volumes:
+      # The Prompt bank's source of truth (ADR-0004), so that the suite can hold
+      # `seed.py`'s copy of it to the document the two are kept in step with by hand.
+      # Mounted rather than built in: `docs` and `*.md` are in `.dockerignore` on
+      # purpose, and a runtime image is not where documentation belongs.
+      - ./docs/prompt-bank.md:/app/docs/prompt-bank.md:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

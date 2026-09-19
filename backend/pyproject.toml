@@ -1,0 +1,7 @@
+# Kidiary's backend is run, not packaged, so this file carries tool
+# configuration only. Dependencies live in requirements*.txt.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

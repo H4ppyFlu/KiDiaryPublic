@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- The favicon's notebook, full-bleed on cream, for a home screen tile. -->
+  <rect width="512" height="512" fill="#f2e8de" />
+  <g transform="translate(32,32) scale(14)">
+    <rect x="5" y="3" width="22" height="26" rx="3" fill="#c8643c" />
+    <rect x="5" y="3" width="5" height="26" rx="3" fill="#a94f2e" />
+    <path d="M19 3h4v11l-2-1.6L19 14z" fill="#f2e8de" />
+  </g>
+</svg>
