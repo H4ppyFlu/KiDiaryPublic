@@ -6,8 +6,7 @@ accumulate into an archive of the child's growing up.
 
 It runs on a Raspberry Pi at home and is published to the family's tailnet and to nowhere
 else. The vocabulary this project speaks is in [`CONTEXT.md`](CONTEXT.md), and the decisions
-behind it in [`docs/adr/`](docs/adr) — ten of them, each one a thing that had to be settled
-before the code could be written.
+behind it in [`docs/adr/`](docs/adr).
 
 ## The stack
 
